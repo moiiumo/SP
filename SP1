@@ -1,0 +1,60 @@
+import pandas as pd
+import numpy as np
+
+# สร้าง DataFrame ตัวอย่าง (แทนที่ด้วยข้อมูลจริงของคุณ)
+np.random.seed(42)
+data = {
+    'น้ำหนัก': np.random.normal(70, 10, 365),
+    'ปริมาณน้ำที่ดื่ม': np.random.normal(2, 0.5, 365),  # ลิตร
+    'ระดับน้ำตาลในเลือด FBS': np.random.normal(100, 15, 365),
+    'ระดับน้ำตาลในเลือด OGT': np.random.normal(150, 20, 365),
+    'ระดับน้ำตาลในเลือด HbA1C': np.random.normal(6.0, 0.5, 365),
+    'ความดันโลหิต SBP': np.random.normal(120, 15, 365),
+    'ความดันโลหิต DBP': np.random.normal(80, 10, 365),
+    'การเดิน': np.random.normal(5000, 1000, 365),  # ขั้นตอน
+    'การออกกำลังกาย': np.random.normal(30, 10, 365),  # นาที
+    'การทานยา': np.random.choice(['ตรงเวลา', 'ช้ากว่าเวลา', 'ลืมทาน'], 365),
+}
+
+df = pd.DataFrame(data)
+
+# แปลงการทานยาเป็นค่าตัวเลข
+df['การทานยา'] = df['การทานยา'].map({'ตรงเวลา': 0, 'ช้ากว่าเวลา': 1, 'ลืมทาน': 2})
+
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import StandardScaler
+
+# สร้างโมเดลเพื่อทำนายค่าเบาหวาน
+X = df[['ปริมาณน้ำที่ดื่ม', 'การเดิน', 'การออกกำลังกาย', 'การทานยา']]
+y_diabetes = df['ระดับน้ำตาลในเลือด FBS']
+
+# แบ่งข้อมูล
+X_train, X_test, y_train, y_test = train_test_split(X, y_diabetes, test_size=0.2, random_state=42)
+
+# สเกลข้อมูล
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# สร้างและฝึกโมเดล
+model_diabetes = LinearRegression()
+model_diabetes.fit(X_train_scaled, y_train)
+
+# ทำนายค่าเบาหวาน
+y_pred_diabetes = model_diabetes.predict(X_test_scaled)
+
+import matplotlib.pyplot as plt
+
+# คำนวณค่าความสำคัญของฟีเจอร์
+importance_diabetes = model_diabetes.coef_
+
+# แสดงกราฟค่าความสำคัญของฟีเจอร์
+features = ['ปริมาณน้ำที่ดื่ม', 'การเดิน', 'การออกกำลังกาย', 'การทานยา']
+plt.figure(figsize=(10, 6))
+plt.bar(features, importance_diabetes)
+plt.title('Feature Importance for Diabetes Prediction')
+plt.xlabel('Feature')
+plt.ylabel('Importance')
+plt.show()
+
